@@ -10,11 +10,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,199 +26,410 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import com.example.myapplication.ui.theme.Atividade
-import com.example.myapplication.ui.theme.Rotina
-import com.example.myapplication.ui.theme.listaAtividades as listaAtividadesGlobal
-import com.example.myapplication.ui.theme.listaRotinas as listaRotinasGlobal
+import androidx.lifecycle.viewmodel.compose.viewModel
 
-@Preview(showBackground = true)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TelaCriacao(navController: NavHostController) {
+fun TelaCriacao(
+    navController: androidx.navigation.NavHostController,
+    viewModel: TelaCriacaoViewModel = viewModel()
+) {
+
+    val contexto = LocalContext.current
+
     val begeFundo = Color(0xFFF3EFE0)
     val verdeCampo = Color(0xFF38B560)
     val verdeTexto = Color(0xFF7D8C7A)
+    val vermelho = Color(0xFFFF5252)
 
-    val context = LocalContext.current
+    val nomeRotina by viewModel.nomeRotina
+    val inicio by viewModel.inicio
+    val fim by viewModel.fim
+    val nomeAtividade by viewModel.nomeAtividade
+    val duracaoAtividade by viewModel.duracaoAtividade
 
-    var nomeRotina by remember { mutableStateOf("Rotina #6") }
-    var inicio by remember { mutableStateOf("08:00") }
-    var fim by remember { mutableStateOf("09:00") }
-    var nomeAtividade by remember { mutableStateOf("") }
-    var duracaoAtividade by remember { mutableStateOf("") }
 
-    // Lista local para exibição em tela
-    val listaAtividadesLocais = remember { mutableStateListOf<Atividade>() }
-
-    Surface(modifier = Modifier.fillMaxSize(), color = begeFundo) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = { },
-                    modifier = Modifier.size(40.dp)
-                        .background(Color(0xFFE2DDD0), shape = CircleShape)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Voltar", tint = Color.Black)
-                }
-
-                Text(
-                    text = "Rotina: #${listaRotinasGlobal.size + 1}",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-
-                Button(
-                    onClick = {
-                        if (nomeRotina.isBlank()) {
-                            Toast.makeText(context, "Dê um nome à rotina", Toast.LENGTH_SHORT).show()
-                        } else {
-                            // Salva a rotina
-                            val tempoTotal = listaAtividadesLocais.sumOf { it.duracaoMinutos }
-                            val novaRotina = Rotina(
-                                idRotina = (listaRotinasGlobal.size + 1),
-                                nomeRotina = nomeRotina,
-                                tempoMinutosRotina = tempoTotal
-                            )
-                            listaRotinasGlobal.add(novaRotina)
-
-                            // Salva as atividades vinculando ao ID da rotina
-                            listaAtividadesLocais.forEach { atividade ->
-                                atividade.idRotina = novaRotina.idRotina
-                                listaAtividadesGlobal.add(atividade)
-                            }
-
-                            Toast.makeText(
-                                context,
-                                "Rotina \"$nomeRotina\" salva com ${listaAtividadesLocais.size} atividade(s)",
-                                Toast.LENGTH_SHORT
-                            ).show()
+    Scaffold(
+        containerColor = begeFundo,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Nova rotina",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
                         }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252)),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Text("Salvar rotina", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
-            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Voltar"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = begeFundo
+                )
+            )
+        }
+    ) { paddingValues ->
 
-            Spacer(Modifier.height(16.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+        ) {
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+            // Título da rotina
+            Text(
+                text = "Rotina #${viewModel.proximoIdRotina()}",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+
+            // Nome da rotina
             CampoTexto(
-                valor = "Rotina: #${listaRotinasGlobal.size + 1}",
-                aoMudar = { nomeRotina = it },
+                valor = nomeRotina,
+                aoMudar = {
+                    viewModel.alterarNomeRotina(it)
+                },
                 placeholder = "Nome da rotina",
                 cor = verdeCampo
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
+
+            // Horários
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Início", fontSize = 12.sp, color = verdeTexto,
-                        modifier = Modifier.padding(bottom = 4.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = "Início",
+                        fontSize = 12.sp,
+                        color = verdeTexto
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     CampoTexto(
                         valor = inicio,
-                        aoMudar = { inicio = it },
-                        placeholder = "00:00",
+                        aoMudar = {
+                            viewModel.alterarInicio(it)
+                        },
+                        placeholder = "08:00",
                         cor = verdeCampo,
-                        icone = { Icon(Icons.Default.List, "Horário início", tint = Color.Black) }
-                    )
-                }
-                Column(Modifier.weight(1f)) {
-                    Text("Fim", fontSize = 12.sp, color = verdeTexto,
-                        modifier = Modifier.padding(bottom = 4.dp))
-                    CampoTexto(
-                        valor = fim,
-                        aoMudar = { fim = it },
-                        placeholder = "00:00",
-                        cor = verdeCampo,
-                        icone = { Icon(Icons.Default.List, "Horário fim", tint = Color.Black) }
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    CampoTexto(nomeAtividade, { nomeAtividade = it }, "Nome atividade:", verdeCampo)
-                    CampoTexto(
-                        duracaoAtividade,
-                        { duracaoAtividade = it.filter { c -> c.isDigit() } },
-                        "Duração (min):",
-                        verdeCampo,
                         somenteNumeros = true
                     )
                 }
 
-                Row(
-                    modifier = Modifier.size(width = 64.dp, height = 108.dp)
-                        .background(verdeCampo, shape = RoundedCornerShape(12.dp)),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    IconButton(onClick = {
-                        if (nomeAtividade.isBlank() || duracaoAtividade.isBlank()) {
-                            Toast.makeText(context, "Preencha nome e duração", Toast.LENGTH_SHORT).show()
+
+                    Text(
+                        text = "Fim",
+                        fontSize = 12.sp,
+                        color = verdeTexto
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    CampoTexto(
+                        valor = fim,
+                        aoMudar = {
+                            viewModel.alterarFim(it)
+                        },
+                        placeholder = "09:00",
+                        cor = verdeCampo,
+                        somenteNumeros = true
+                    )
+                }
+            }
+
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+
+            Text(
+                text = "Adicionar atividade",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+
+            // Nome + duração + botão
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+
+                    CampoTexto(
+                        valor = nomeAtividade,
+                        aoMudar = {
+                            viewModel.alterarNomeAtividade(it)
+                        },
+                        placeholder = "Nome atividade",
+                        cor = verdeCampo
+                    )
+
+                    CampoTexto(
+                        valor = duracaoAtividade,
+                        aoMudar = {
+                            viewModel.alterarDuracaoAtividade(it)
+                        },
+                        placeholder = "Duração (min)",
+                        cor = verdeCampo,
+                        somenteNumeros = true
+                    )
+                }
+
+
+                // Botão adicionar
+                IconButton(
+                    onClick = {
+
+                        val adicionou =
+                            viewModel.adicionarAtividade()
+
+                        if (adicionou) {
+
+                            Toast.makeText(
+                                contexto,
+                                "Atividade adicionada",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
                         } else {
-                            val duracaoDouble = duracaoAtividade.toDoubleOrNull() ?: 0.0
-                            val novaAtividade = Atividade(
-                                idAtividade = listaAtividadesLocais.size + 1,
-                                nomeAtividade = nomeAtividade,
-                                duracaoMinutos = duracaoDouble
-                            )
-                            listaAtividadesLocais.add(novaAtividade)
-                            Toast.makeText(context, "\"$nomeAtividade\" adicionada", Toast.LENGTH_SHORT).show()
-                            nomeAtividade = ""
-                            duracaoAtividade = ""
+
+                            Toast.makeText(
+                                contexto,
+                                "Preencha nome e duração corretamente",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
-                    }) {
-                        Icon(Icons.Default.Add, "Adicionar", tint = Color.White,
-                            modifier = Modifier.size(32.dp))
-                    }
+                    },
+
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            verdeCampo,
+                            RoundedCornerShape(12.dp)
+                        )
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Adicionar atividade",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(listaAtividadesLocais) { a ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(44.dp)
-                            .background(Color(0xFFE2DDD0), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+            Spacer(modifier = Modifier.height(20.dp))
+
+
+            // Título da lista
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = "Atividades",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "${viewModel.atividades.size} item(ns)",
+                    color = verdeTexto
+                )
+            }
+
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+            // LISTA REATIVA
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+
+                items(
+                    items = viewModel.atividades,
+                    key = {
+                        it.idAtividade
+                    }
+                ) { atividade ->
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFE2DDD0)
+                        )
                     ) {
-                        Text(a.nomeAtividade, color = Color.Black, fontWeight = FontWeight.Bold)
-                        Text("${a.duracaoMinutos.toInt()} min", color = verdeTexto)
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    horizontal = 16.dp,
+                                    vertical = 12.dp
+                                ),
+
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween,
+
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+
+                                Text(
+                                    text = atividade.nomeAtividade,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black,
+                                    fontSize = 16.sp
+                                )
+
+                                Spacer(
+                                    modifier = Modifier.height(4.dp)
+                                )
+
+                                Text(
+                                    text = "${atividade.duracaoMinutos.toInt()} minutos",
+                                    color = verdeTexto,
+                                    fontSize = 14.sp
+                                )
+                            }
+
+
+                            // REMOVER
+                            IconButton(
+                                onClick = {
+
+                                    viewModel.removerAtividade(
+                                        atividade.idAtividade
+                                    )
+
+                                    Toast.makeText(
+                                        contexto,
+                                        "Atividade removida",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            ) {
+
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Remover atividade",
+                                    tint = vermelho
+                                )
+                            }
+                        }
                     }
                 }
             }
+
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+
+            // SALVAR ROTINA
+            Button(
+                onClick = {
+
+                    if (nomeRotina.isBlank()) {
+
+                        Toast.makeText(
+                            contexto,
+                            "Dê um nome à rotina",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                    } else {
+
+                        val rotina =
+                            viewModel.salvarRotina()
+
+                        if (rotina != null) {
+
+                            Toast.makeText(
+                                contexto,
+                                "Rotina salva com ${viewModel.atividades.size} atividade(s)",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            navController.popBackStack()
+                        }
+                    }
+                },
+
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = vermelho
+                ),
+
+                shape = RoundedCornerShape(12.dp)
+            ) {
+
+                Text(
+                    text = "Salvar rotina",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
+
 
 @Composable
 private fun CampoTexto(
@@ -224,37 +437,63 @@ private fun CampoTexto(
     aoMudar: (String) -> Unit,
     placeholder: String,
     cor: Color,
-    somenteNumeros: Boolean = false,
-    icone: (@Composable () -> Unit)? = null
+    somenteNumeros: Boolean = false
 ) {
+
     Row(
-        modifier = Modifier.fillMaxWidth().height(48.dp)
-            .background(cor, shape = RoundedCornerShape(12.dp))
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .background(
+                color = cor,
+                shape = RoundedCornerShape(12.dp)
+            )
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.weight(1f)) {
+
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
             if (valor.isEmpty()) {
-                Text(placeholder, color = Color.White.copy(alpha = 0.6f), fontSize = 16.sp)
+
+                Text(
+                    text = placeholder,
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 16.sp
+                )
             }
+
             BasicTextField(
                 value = valor,
+
                 onValueChange = aoMudar,
+
                 singleLine = true,
+
                 textStyle = TextStyle(
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 ),
+
                 cursorBrush = SolidColor(Color.White),
+
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = if (somenteNumeros) KeyboardType.Number else KeyboardType.Text,
-                    capitalization = KeyboardCapitalization.Sentences
+                    keyboardType =
+                        if (somenteNumeros)
+                            KeyboardType.Number
+                        else
+                            KeyboardType.Text,
+
+                    capitalization =
+                        KeyboardCapitalization.Sentences
                 ),
+
                 modifier = Modifier.fillMaxWidth()
             )
         }
-        icone?.invoke()
     }
 }

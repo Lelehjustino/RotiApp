@@ -45,6 +45,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.myapplication.ui.theme.calcularNivel
+import com.example.myapplication.ui.theme.calcularXp
+import com.example.myapplication.ui.theme.calcularXpNoNivel
 
 
 // ============================================================
@@ -178,6 +181,12 @@ fun Progresso(navController: NavHostController) {
 @Composable
 fun CardNivel() {
 
+    val xp = calcularXp()
+    val nivel = calcularNivel()
+    val xpNoNivel = calcularXpNoNivel()
+
+    val progresso = xpNoNivel / 100f
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -213,11 +222,20 @@ fun CardNivel() {
                     modifier = Modifier.width(12.dp)
                 )
 
-                Text(
-                    text = "Nível 10",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Column {
+
+                    Text(
+                        text = "Nível $nivel",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "$xp XP acumulado",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
             }
 
             Spacer(
@@ -225,7 +243,7 @@ fun CardNivel() {
             )
 
             LinearProgressIndicator(
-                progress = { 0.72f },
+                progress = { progresso },
 
                 modifier = Modifier
                     .fillMaxWidth()
@@ -241,7 +259,7 @@ fun CardNivel() {
             )
 
             Text(
-                text = "720 / 1000 XP",
+                text = "$xpNoNivel / 100 XP",
                 fontSize = 12.sp,
                 color = Color.Gray
             )
