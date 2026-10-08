@@ -348,7 +348,7 @@ O aplicativo será compilado e executado no dispositivo selecionado.
 # 📸 Documentação do processo
 Clique abaixo para ver o progresso do aplicativo:
 
-[▶️ Veja o progresso do RotinApp]([https://drive.google.com/file/d/1ZJ0KFRyBLc90iXeIkImVp8Kb0NQnIrcw/view?usp=sharing](https://docs.google.com/presentation/d/1mJGpCOkL4Ml6ntdr6JviR-vTJbXRlhazem6Y5Pq6kDA/edit?hl=pt-BR&slide=id.h42b499eac98e7b93_0_30#slide=id.h42b499eac98e7b93_0_30))
+[ Veja o progresso do RotinApp](https://docs.google.com/presentation/d/1mJGpCOkL4Ml6ntdr6JviR-vTJbXRlhazem6Y5Pq6kDA/edit?hl=pt-BR&slide=id.h42b499eac98e7b93_0_62#slide=id.h42b499eac98e7b93_0_62)
 
 ---
 
