@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.ui.theme.registrarRotinaNoHistorico
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -400,6 +401,10 @@ fun TelaCriacao(
                                 "Rotina salva com ${viewModel.atividades.size} atividade(s)",
                                 Toast.LENGTH_SHORT
                             ).show()
+
+                            registrarRotinaNoHistorico(
+                                rotina.nomeRotina
+                            )
 
                             navController.popBackStack()
                         }

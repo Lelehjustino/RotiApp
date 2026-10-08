@@ -1,65 +1,132 @@
+
 package com.example.myapplication
 
-import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.example.myapplication.ui.theme.Meta
+import com.example.myapplication.ui.theme.listaMetas
+import com.example.myapplication.ui.theme.registrarMetaNoHistorico
 
 class MetasViewModel : ViewModel() {
 
-    // Lista de metas
-    private val _metas = mutableStateListOf<Meta>()
+    // Lista compartilhada pelo aplicativo
+    val metas = listaMetas
 
-    val metas: List<Meta>
-        get() = _metas
 
-    // Adicionar uma meta
+    // ==========================================
+    // PRÓXIMO ID
+    // ==========================================
+
+    private fun proximoId(): Int {
+
+        if (metas.isEmpty()) {
+            return 1
+        }
+
+        return metas.maxOf {
+            it.idMeta
+        } + 1
+    }
+
+
+    // ==========================================
+    // ADICIONAR META
+    // ==========================================
+
     fun adicionarMeta(
         nome: String,
         descricao: String
     ) {
 
-        val novoId =
-            if (_metas.isEmpty()) {
-                1
-            } else {
-                _metas.maxOf { it.idMeta } + 1
-            }
+        if (nome.isBlank()) {
+            return
+        }
 
-        _metas.add(
-            Meta(
-                idMeta = novoId,
-                nomeMeta = nome,
-                descricaoMeta = descricao,
-                concluida = false
-            )
+        val novaMeta = Meta(
+            idMeta = proximoId(),
+            nomeMeta = nome.trim(),
+            descricaoMeta = descricao.trim(),
+            concluida = false
         )
+
+        metas.add(novaMeta)
     }
 
-    // Marcar ou desmarcar uma meta
+
+    // ==========================================
+    // CONCLUIR / DESMARCAR META
+    // ==========================================
+
     fun alternarMeta(meta: Meta) {
 
-        meta.concluida = !meta.concluida
-
-        val index = _metas.indexOfFirst {
+        val indice = metas.indexOfFirst {
             it.idMeta == meta.idMeta
         }
 
-        if (index != -1) {
+        if (indice != -1) {
 
-            _metas[index] = Meta(
-                idMeta = meta.idMeta,
-                nomeMeta = meta.nomeMeta,
-                descricaoMeta = meta.descricaoMeta,
-                concluida = meta.concluida
+            val metaAtual = metas[indice]
+
+            val novaConclusao = !metaAtual.concluida
+
+            metas[indice] = metaAtual.copy(
+                concluida = novaConclusao
             )
+
+            // Só registra no histórico quando CONCLUI
+            if (novaConclusao) {
+                registrarMetaNoHistorico(
+                    metaAtual.nomeMeta
+                )
+            }
         }
     }
 
-    // Excluir uma meta
+
+
+    // ==========================================
+    // EXCLUIR META
+    // ==========================================
+
     fun removerMeta(meta: Meta) {
 
-        _metas.removeAll {
+        metas.removeAll {
             it.idMeta == meta.idMeta
+        }
+    }
+
+
+    // ==========================================
+    // BUSCAR UMA META
+    // ==========================================
+
+    fun buscarMeta(idMeta: Int): Meta? {
+
+        return metas.find {
+            it.idMeta == idMeta
+        }
+    }
+
+
+    // ==========================================
+    // ATUALIZAR META
+    // ==========================================
+
+    fun atualizarMeta(
+        idMeta: Int,
+        nome: String,
+        descricao: String
+    ) {
+
+        val indice = metas.indexOfFirst {
+            it.idMeta == idMeta
+        }
+
+        if (indice != -1) {
+
+            metas[indice] = metas[indice].copy(
+                nomeMeta = nome.trim(),
+                descricaoMeta = descricao.trim()
+            )
         }
     }
 }

@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.myapplication.ui.theme.listaMetas
+import com.example.myapplication.ui.theme.listaRotinas
 
 @Composable
 fun TelaHistorico(
@@ -40,13 +42,9 @@ fun TelaHistorico(
 
     val historicos = viewModel.historicos
 
-    val totalRotinas = historicos.count {
-        it.rotinaConcluida
-    }
+    val totalRotinas = listaRotinas.size
 
-    val totalMetas = historicos.count {
-        it.metaConcluida
-    }
+    val totalMetas = listaMetas.size
 
     val totalDias = historicos
         .map { it.data }
@@ -125,11 +123,6 @@ fun TelaHistorico(
                 ) {
 
                     ResumoItem(
-                        valor = totalDias.toString(),
-                        titulo = "Dias"
-                    )
-
-                    ResumoItem(
                         valor = totalRotinas.toString(),
                         titulo = "Rotinas"
                     )
@@ -164,7 +157,7 @@ fun TelaHistorico(
         // HISTÓRICO
         // ----------------------------------------------------
 
-        if (historicos.isEmpty()) {
+        if (listaRotinas.isEmpty() && listaMetas.isEmpty()) {
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -192,7 +185,7 @@ fun TelaHistorico(
                     )
 
                     Text(
-                        text = "Conclua uma rotina ou meta para começar seu histórico.",
+                        text = "Crie uma rotina ou meta para começar.",
                         fontSize = 13.sp,
                         color = Color.Gray
                     )
@@ -201,22 +194,127 @@ fun TelaHistorico(
 
         } else {
 
-            historicos
-                .reversed()
-                .forEach { historico ->
+            // ROTINAS
+            listaRotinas.forEach { rotina ->
 
-                    CardHistorico(
-                        historico = historico,
-                        onDelete = {
-                            viewModel.removerHistorico(historico)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(32.dp)
+                        )
+
+                        Spacer(
+                            modifier = Modifier.size(12.dp)
+                        )
+
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+
+                            Text(
+                                text = "Rotina",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+
+                            Text(
+                                text = rotina.nomeRotina,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
-                    )
-
-                    Spacer(
-                        modifier = Modifier.height(12.dp)
-                    )
+                    }
                 }
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+            }
+
+            // METAS
+            listaMetas.forEach { meta ->
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(32.dp)
+                        )
+
+                        Spacer(
+                            modifier = Modifier.size(12.dp)
+                        )
+
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+
+                            Text(
+                                text = "Meta",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+
+                            Text(
+                                text = meta.nomeMeta,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            if (meta.concluida) {
+                                Text(
+                                    text = "Concluída",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF388E3C)
+                                )
+                            } else {
+                                Text(
+                                    text = "Em andamento",
+                                    fontSize = 13.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+            }
         }
+
 
         Spacer(
             modifier = Modifier.height(20.dp)

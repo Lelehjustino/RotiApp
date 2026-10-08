@@ -1,6 +1,8 @@
+
 package com.example.myapplication
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +25,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -41,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.myapplication.ui.theme.Meta
 
 @Composable
 fun TelaMetas(
@@ -65,9 +69,9 @@ fun TelaMetas(
             .padding(horizontal = 20.dp)
     ) {
 
-        // ----------------------------------------------------
+        // ==========================================
         // TOPO
-        // ----------------------------------------------------
+        // ==========================================
 
         Row(
             modifier = Modifier
@@ -95,20 +99,21 @@ fun TelaMetas(
             )
         }
 
+
         Spacer(
             modifier = Modifier.height(16.dp)
         )
 
-        // ----------------------------------------------------
-        // LISTA
-        // ----------------------------------------------------
-
+        var metaSelecionada by remember { mutableStateOf<Meta?>(null) }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
+            // ==========================================
             // RESUMO
+            // ==========================================
+
             item {
 
                 Card(
@@ -134,7 +139,11 @@ fun TelaMetas(
                         )
 
                         Text(
-                            text = "Continue avançando!",
+                            text = if (total == 0) {
+                                "Crie sua primeira meta!"
+                            } else {
+                                "Continue avançando!"
+                            },
                             color = Color.Gray,
                             fontSize = 14.sp
                         )
@@ -142,17 +151,24 @@ fun TelaMetas(
                 }
             }
 
-            // BOTÃO NOVA META
+
+            // ==========================================
+            // NOVA META
+            // ==========================================
+
             item {
 
                 Button(
                     onClick = {
                         mostrarDialogo = true
                     },
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
+
                     shape = RoundedCornerShape(16.dp),
+
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF388E3C)
                     )
@@ -175,32 +191,110 @@ fun TelaMetas(
                 }
             }
 
+
+            // ==========================================
             // METAS
-            items(viewModel.metas) { meta ->
+            // ==========================================
+
+            items(
+                items = viewModel.metas,
+                key = { it.idMeta }
+            ) { meta ->
+
 
                 CardMeta(
                     meta = meta,
+
+                    onClick = {
+                        metaSelecionada = meta
+                    },
+
                     onCheck = {
                         viewModel.alternarMeta(meta)
                     },
+
                     onDelete = {
                         viewModel.removerMeta(meta)
                     }
                 )
+
+
             }
         }
+
+        metaSelecionada?.let { meta ->
+
+            AlertDialog(
+                onDismissRequest = {
+                    metaSelecionada = null
+                },
+
+                title = {
+                    Text(
+                        text = meta.nomeMeta,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+
+                text = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+
+                        Text(
+                            text = if (meta.descricaoMeta.isBlank()) {
+                                "Sem descrição."
+                            } else {
+                                meta.descricaoMeta
+                            }
+                        )
+
+                        HorizontalDivider()
+
+                        Text(
+                            text = "Status: ${
+                                if (meta.concluida) {
+                                    "Concluída"
+                                } else {
+                                    "Em andamento"
+                                }
+                            }",
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = "ID da meta: ${meta.idMeta}"
+                        )
+                    }
+                },
+
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            metaSelecionada = null
+                        }
+                    ) {
+                        Text("Fechar")
+                    }
+                }
+            )
+        }
+
     }
 
-    // --------------------------------------------------------
-    // DIALOGO NOVA META
-    // --------------------------------------------------------
+
+    // ==========================================
+    // DIALOGO
+    // ==========================================
 
     if (mostrarDialogo) {
 
         DialogoNovaMeta(
+
             onDismiss = {
                 mostrarDialogo = false
             },
+
             onConfirm = { nome, descricao ->
 
                 viewModel.adicionarMeta(
@@ -221,14 +315,21 @@ fun TelaMetas(
 
 @Composable
 fun CardMeta(
-    meta: com.example.myapplication.ui.theme.Meta,
+    meta: Meta,
+    onClick: () -> Unit,
     onCheck: () -> Unit,
     onDelete: () -> Unit
 ) {
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onClick()
+            },
+
         shape = RoundedCornerShape(18.dp),
+
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         )
@@ -238,15 +339,18 @@ fun CardMeta(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
+
             verticalAlignment = Alignment.CenterVertically
         ) {
 
             Checkbox(
                 checked = meta.concluida,
+
                 onCheckedChange = {
                     onCheck()
                 }
             )
+
 
             Column(
                 modifier = Modifier.weight(1f)
@@ -271,6 +375,7 @@ fun CardMeta(
                     )
                 }
             }
+
 
             IconButton(
                 onClick = onDelete
@@ -305,10 +410,13 @@ fun DialogoNovaMeta(
         mutableStateOf("")
     }
 
+
     AlertDialog(
+
         onDismissRequest = onDismiss,
 
         title = {
+
             Text(
                 text = "Nova meta",
                 fontWeight = FontWeight.Bold
@@ -321,28 +429,37 @@ fun DialogoNovaMeta(
 
                 OutlinedTextField(
                     value = nome,
+
                     onValueChange = {
                         nome = it
                     },
+
                     label = {
                         Text("Nome da meta")
                     },
+
                     singleLine = true,
+
                     modifier = Modifier.fillMaxWidth()
                 )
+
 
                 Spacer(
                     modifier = Modifier.height(12.dp)
                 )
 
+
                 OutlinedTextField(
                     value = descricao,
+
                     onValueChange = {
                         descricao = it
                     },
+
                     label = {
                         Text("Descrição")
                     },
+
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -378,3 +495,4 @@ fun DialogoNovaMeta(
         }
     )
 }
+
