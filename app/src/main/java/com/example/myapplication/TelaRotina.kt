@@ -1,3 +1,4 @@
+
 package com.example.myapplication
 
 import androidx.compose.foundation.background
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,36 +31,91 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.myapplication.ui.theme.listaAtividades
+import com.example.myapplication.ui.theme.listaRotinas
 
-@Preview(showBackground = true)
 @Composable
-fun TelaRotina(navController: NavHostController) {
+fun TelaRotina(
+    navController: NavHostController,
+    idRotina: Int?
+) {
+
     val fundoBege = Color(0xFFF3EFE0)
 
+    /*
+     * Procura a rotina que foi clicada.
+     */
+    val rotina = listaRotinas.find {
+        it.idRotina == idRotina
+    }
+
+    /*
+     * Procura somente as atividades pertencentes
+     * à rotina selecionada.
+     */
+    val atividadesDaRotina = listaAtividades.filter {
+        it.idRotina == idRotina
+    }
+
+    /*
+     * Guarda quais atividades estão concluídas.
+     *
+     * A chave é o id da atividade.
+     *
+     * Exemplo:
+     *
+     * 1 -> true
+     * 2 -> false
+     * 3 -> true
+     */
+    val atividadesConcluidas = remember {
+        mutableStateMapOf<Int, Boolean>()
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize().background(fundoBege).padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .background(fundoBege)
+            .padding(20.dp)
     ) {
-        // Botão Voltar
+
+        /*
+         * BOTÃO VOLTAR
+         */
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp)
         ) {
+
             Surface(
-                modifier = Modifier.size(40.dp).clickable { },
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable {
+                        navController.popBackStack()
+                    },
+
                 shape = CircleShape,
+
                 color = fundoBege
             ) {
-                Box(contentAlignment = Alignment.Center) {
+
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Voltar",
@@ -68,38 +126,136 @@ fun TelaRotina(navController: NavHostController) {
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Cabeçalho da Rotina
-        Text(
-            text = "Rotina #1",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "06:00 até 07:30",
-            fontSize = 16.sp,
-            color = Color.Black
+        Spacer(
+            modifier = Modifier.height(12.dp)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
 
-        // Lista de Tarefas
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            CardTarefa(titulo = "Tarefa #1", descricao = "Tempo: 30 min", isConcluida = true)
-            CardTarefa(titulo = "Tarefa #2", descricao = "Tempo: 30 min", isConcluida = true)
-            CardTarefa(titulo = "Tarefa #3", descricao = "Tempo: 30 min", isConcluida = false)
+        /*
+         * CABEÇALHO DA ROTINA
+         */
+        if (rotina != null) {
+
+            Text(
+                text = rotina.nomeRotina,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
+            Text(
+                text = "${rotina.tempoMinutosRotina} minutos",
+                fontSize = 16.sp,
+                color = Color.Black
+            )
+
+        } else {
+
+            Text(
+                text = "Rotina não encontrada",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
         }
 
-        // Botão Editar
-        BotaoEditar(onClick = { })
+
+        Spacer(
+            modifier = Modifier.height(24.dp)
+        )
+
+
+        /*
+         * LISTA DE ATIVIDADES
+         */
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            items(
+                items = atividadesDaRotina,
+                key = {
+                    it.idAtividade
+                }
+            ) { atividade ->
+
+                /*
+                 * Verifica se a atividade está marcada.
+                 */
+                val concluida =
+                    atividadesConcluidas[atividade.idAtividade] ?: false
+
+
+                CardTarefa(
+                    titulo = atividade.nomeAtividade,
+
+                    descricao =
+                        "Tempo: ${atividade.duracaoMinutos.toInt()} min",
+
+                    isConcluida = concluida,
+
+                    onCheckClick = {
+
+                        /*
+                         * INVERTE O ESTADO
+                         *
+                         * false -> true
+                         * true -> false
+                         */
+                        atividadesConcluidas[
+                            atividade.idAtividade
+                        ] = !concluida
+                    },
+
+                    onDeleteClick = {
+
+                        /*
+                         * Remove a atividade da lista global.
+                         */
+                        listaAtividades.removeAll {
+                            it.idAtividade == atividade.idAtividade
+                        }
+
+                        /*
+                         * Remove também o estado
+                         * de concluída.
+                         */
+                        atividadesConcluidas.remove(
+                            atividade.idAtividade
+                        )
+                    }
+                )
+            }
+        }
+
+
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
+
+
+        /*
+         * BOTÃO EDITAR
+         */
+        BotaoEditar(
+            onClick = {
+
+                navController.navigate(
+                    "${RotaAbas.TelaCriacao}/editar/${idRotina}"
+                )
+            }
+        )
     }
 }
+
 
 @Composable
 fun CardTarefa(
@@ -109,84 +265,181 @@ fun CardTarefa(
     onDeleteClick: () -> Unit = {},
     onCheckClick: () -> Unit = {}
 ) {
+
     val verdeCard = Color(0xFF388E3C)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = verdeCard),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+
+        colors = CardDefaults.cardColors(
+            containerColor = verdeCard
+        ),
+
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
     ) {
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 12.dp
+                ),
+
+            horizontalArrangement =
+                Arrangement.SpaceBetween,
+
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
-            // Lado Esquerdo: Ícone de Lixeira + Textos
-            Row(verticalAlignment = Alignment.CenterVertically) {
+
+
+            /*
+             * LADO ESQUERDO
+             */
+            Row(
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                /*
+                 * BOTÃO EXCLUIR
+                 */
                 Surface(
-                    modifier = Modifier.size(36.dp).clickable { onDeleteClick() },
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color.White.copy(alpha = 0.25f)
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clickable {
+                            onDeleteClick()
+                        },
+
+                    shape =
+                        RoundedCornerShape(8.dp),
+
+                    color =
+                        Color.White.copy(
+                            alpha = 0.25f
+                        )
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+
+                    Box(
+                        contentAlignment =
+                            Alignment.Center
+                    ) {
+
                         Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Excluir",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            imageVector =
+                                Icons.Default.Delete,
+
+                            contentDescription =
+                                "Excluir",
+
+                            tint =
+                                Color.White,
+
+                            modifier =
+                                Modifier.size(20.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
 
+                Spacer(
+                    modifier = Modifier.width(12.dp)
+                )
+
+
+                /*
+                 * NOME + DURAÇÃO
+                 */
                 Column {
+
                     Text(
                         text = titulo,
+
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+
+                        fontWeight =
+                            FontWeight.Bold,
+
                         color = Color.White
                     )
+
                     Text(
                         text = descricao,
+
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.9f)
+
+                        color =
+                            Color.White.copy(
+                                alpha = 0.9f
+                            )
                     )
                 }
             }
 
-            // Lado Direito: Ícone Checkbox/Círculo
+
+            /*
+             * CHECKBOX
+             */
             Icon(
-                imageVector = if (isConcluida) Icons.Default.CheckCircle else Icons.Outlined.CheckCircle,
-                contentDescription = if (isConcluida) "Concluído" else "Pendente",
+                imageVector =
+                    if (isConcluida)
+                        Icons.Default.CheckCircle
+                    else
+                        Icons.Outlined.CheckCircle,
+
+                contentDescription =
+                    if (isConcluida)
+                        "Concluído"
+                    else
+                        "Pendente",
+
                 tint = Color.White,
+
                 modifier = Modifier
                     .size(28.dp)
-                    .clickable { onCheckClick() }
+                    .clickable {
+                        onCheckClick()
+                    }
             )
         }
     }
 }
 
+
 @Composable
-fun BotaoEditar(onClick: () -> Unit) {
+fun BotaoEditar(
+    onClick: () -> Unit
+) {
+
     val vermelhoBotao = Color(0xFFFF5252)
 
     Button(
         onClick = onClick,
+
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp),
+
         shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = vermelhoBotao)
+
+        colors = ButtonDefaults.buttonColors(
+            containerColor = vermelhoBotao
+        )
     ) {
+
         Text(
             text = "Editar",
+
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+
+            fontWeight =
+                FontWeight.Bold,
+
             color = Color.White
         )
     }

@@ -1,3 +1,4 @@
+
 package com.example.myapplication
 
 import androidx.compose.foundation.clickable
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -27,25 +29,30 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.myapplication.ui.theme.Rotina
+import com.example.myapplication.ui.theme.listaAtividades
+import com.example.myapplication.ui.theme.listaRotinas
+
 
 @Composable
-fun TelaListaRotinas(navController: NavHostController) {
+fun TelaListaRotinas(
+    navController: NavHostController
+) {
 
     val begeFundo = Color(0xFFF3EFE0)
-
-    // Por enquanto, lista vazia
-    val listaRotinas = mutableListOf<Rotina>()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -56,6 +63,7 @@ fun TelaListaRotinas(navController: NavHostController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
+
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -64,51 +72,99 @@ fun TelaListaRotinas(navController: NavHostController) {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
+
                 modifier = Modifier.padding(
                     top = 16.dp,
                     bottom = 24.dp
                 )
             )
 
+
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(listaRotinas) { rotina ->
+
+                items(
+                    items = listaRotinas,
+                    key = { rotina ->
+                        rotina.idRotina
+                    }
+                ) { rotina ->
 
                     CardRotina(
+                        idRotina = rotina.idRotina,
                         titulo = rotina.nomeRotina,
-                        descricao = "${rotina.tempoMinutosRotina} min"
+                        descricao = "${rotina.tempoMinutosRotina} min",
+                        navController = navController
                     )
                 }
             }
 
-            Botao(
-                titulo = "+ Nova rotina"
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+
+            Button(
+                onClick = {
+
+                    navController.navigate(
+                        RotaAbas.TelaCriacao
+                    )
+                },
+
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+
+                shape = RoundedCornerShape(16.dp),
+
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF388E3C)
+                )
             ) {
-                // Aqui depois vamos abrir a tela de criação
-                navController.navigate(RotaAbas.TelaCriacao)
+
+                Text(
+                    text = "+ Nova rotina",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
         }
     }
 }
 
 
-
 @Composable
 fun CardRotina(
+    idRotina: Int,
     titulo: String,
-    descricao: String
+    descricao: String,
+    navController: NavHostController
 ) {
 
     val vermelhoCard = Color(0xFFFF5252)
 
+    var mostrarConfirmacao by remember {
+        mutableStateOf(false)
+    }
+
+
     Card(
         modifier = Modifier.fillMaxWidth(),
+
         shape = RoundedCornerShape(20.dp),
+
         colors = CardDefaults.cardColors(
             containerColor = vermelhoCard
         ),
+
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
         )
@@ -124,7 +180,19 @@ fun CardRotina(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Column {
+
+            // Área do texto da rotina
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+
+                        navController.navigate(
+                            "${RotaAbas.TelaRotina}/$idRotina"
+                        )
+                    }
+                    .padding(vertical = 4.dp)
+            ) {
 
                 Text(
                     text = titulo,
@@ -140,15 +208,25 @@ fun CardRotina(
                 Text(
                     text = descricao,
                     fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = Color.White.copy(
+                        alpha = 0.9f
+                    )
                 )
             }
 
+
+            Spacer(
+                modifier = Modifier.size(12.dp)
+            )
+
+
+            // Botão de excluir
             Surface(
                 modifier = Modifier
                     .size(32.dp)
                     .clickable {
-                        // Remover rotina aqui
+
+                        mostrarConfirmacao = true
                     },
 
                 shape = CircleShape,
@@ -164,44 +242,87 @@ fun CardRotina(
 
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Remover",
+
+                        contentDescription = "Remover rotina",
+
                         tint = Color.White,
+
                         modifier = Modifier.size(20.dp)
                     )
                 }
             }
         }
     }
-}
 
 
-@Composable
-fun Botao(
-    titulo: String,
-    acao: () -> Unit
-) {
+    // Confirmação de exclusão
+    if (mostrarConfirmacao) {
 
-    val verdeBotao = Color(0xFF388E3C)
+        AlertDialog(
 
-    Button(
-        onClick = acao,
+            onDismissRequest = {
+                mostrarConfirmacao = false
+            },
 
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
+            title = {
+                Text(
+                    text = "Excluir rotina?"
+                )
+            },
 
-        shape = RoundedCornerShape(16.dp),
+            text = {
+                Text(
+                    text = "A rotina \"$titulo\" e todas as atividades dela serão removidas."
+                )
+            },
 
-        colors = ButtonDefaults.buttonColors(
-            containerColor = verdeBotao
-        )
-    ) {
+            confirmButton = {
 
-        Text(
-            text = titulo,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
+                TextButton(
+
+                    onClick = {
+
+                        // Remove as atividades
+                        // relacionadas à rotina
+                        listaAtividades.removeAll {
+
+                            it.idRotina == idRotina
+                        }
+
+
+                        // Remove a rotina
+                        listaRotinas.removeAll {
+
+                            it.idRotina == idRotina
+                        }
+
+
+                        mostrarConfirmacao = false
+                    }
+                ) {
+
+                    Text(
+                        text = "Excluir",
+                        color = Color.Red
+                    )
+                }
+            },
+
+            dismissButton = {
+
+                TextButton(
+
+                    onClick = {
+
+                        mostrarConfirmacao = false
+                    }
+                ) {
+
+                    Text(
+                        text = "Cancelar"
+                    )
+                }
+            }
         )
     }
 }
@@ -223,33 +344,48 @@ fun AppBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
+
         NavItem(
             label = "Rotinas",
+
             icon = Icons.Default.Home,
+
             isSelected = selectedTab == 0,
+
             onClick = {
                 onTabSelected(0)
             },
+
             modifier = Modifier.weight(1f)
         )
+
 
         NavItem(
             label = "Progresso",
+
             icon = Icons.Default.List,
+
             isSelected = selectedTab == 1,
+
             onClick = {
                 onTabSelected(1)
             },
+
             modifier = Modifier.weight(1f)
         )
 
+
         NavItem(
             label = "Perfil",
+
             icon = Icons.Default.Person,
+
             isSelected = selectedTab == 2,
+
             onClick = {
                 onTabSelected(2)
             },
+
             modifier = Modifier.weight(1f)
         )
     }
@@ -259,20 +395,31 @@ fun AppBar(
 @Composable
 private fun NavItem(
     label: String,
+
     icon: ImageVector,
+
     isSelected: Boolean,
+
     onClick: () -> Unit,
+
     modifier: Modifier = Modifier
 ) {
 
     val activeColor = Color(0xFF388E3C)
+
     val inactiveColor = Color(0xFF8D8D8D)
 
+
     val contentColor =
-        if (isSelected) activeColor
-        else inactiveColor
+        if (isSelected) {
+            activeColor
+        } else {
+            inactiveColor
+        }
+
 
     Column(
+
         modifier = modifier.clickable(
             onClick = onClick
         ),
@@ -283,25 +430,37 @@ private fun NavItem(
     ) {
 
         Icon(
+
             imageVector = icon,
+
             contentDescription = label,
+
             tint = contentColor,
+
             modifier = Modifier.size(24.dp)
         )
+
 
         Spacer(
             modifier = Modifier.height(4.dp)
         )
 
+
         Text(
+
             text = label,
+
             color = contentColor,
+
             fontSize = 12.sp,
+
             fontWeight =
-                if (isSelected)
+                if (isSelected) {
                     FontWeight.Bold
-                else
+                } else {
                     FontWeight.Normal
+                }
         )
     }
 }
+

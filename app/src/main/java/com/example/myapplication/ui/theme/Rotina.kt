@@ -1,10 +1,14 @@
+
 package com.example.myapplication.ui.theme
 
-class Rotina(
-    var idRotina: Int = 0,
-    var nomeRotina: String = "",
-    var tempoMinutosRotina: Double = 0.0
+import androidx.compose.runtime.mutableStateListOf
+
+data class Rotina(
+    val idRotina: Int,
+    var nomeRotina: String,
+    var tempoMinutosRotina: Double
 )
 
-// Lista contendo as rotinas
-val listaRotinas: MutableList<Rotina> = mutableListOf()
+// Lista global e REATIVA de rotinas
+val listaRotinas = mutableStateListOf<Rotina>()
+

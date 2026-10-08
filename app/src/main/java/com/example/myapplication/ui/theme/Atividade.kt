@@ -1,4 +1,7 @@
+
 package com.example.myapplication.ui.theme
+
+import androidx.compose.runtime.mutableStateListOf
 
 data class Atividade(
     var idAtividade: Int = 0,
@@ -7,8 +10,8 @@ data class Atividade(
     var duracaoMinutos: Double = 0.0
 )
 
-// Lista para armazenar as atividades
-val listaAtividades = mutableListOf<Atividade>()
+// Lista global e REATIVA de atividades
+val listaAtividades = mutableStateListOf<Atividade>()
 
 fun calcularXp(): Int {
     return listaAtividades.sumOf {

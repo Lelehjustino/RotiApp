@@ -115,31 +115,93 @@ class TelaCriacaoViewModel : ViewModel() {
             return null
         }
 
-        val idRotina = proximoIdRotina()
+        val id = idRotinaEditando
+
+        // =========================
+        // EDITANDO
+        // =========================
+        if (id != null) {
+
+            val rotina = listaRotinasGlobal.find {
+                it.idRotina == id
+            } ?: return null
+
+            rotina.nomeRotina = nomeRotina.value
+
+            rotina.tempoMinutosRotina =
+                atividades.sumOf {
+                    it.duracaoMinutos
+                }
+
+            listaAtividadesGlobal.removeAll {
+                it.idRotina == id
+            }
+
+            atividades.forEach { atividade ->
+
+                listaAtividadesGlobal.add(
+                    atividade.copy(
+                        idRotina = id
+                    )
+                )
+            }
+
+            return rotina
+        }
+
+
+        // =========================
+        // CRIANDO NOVA
+        // =========================
+
+        val novoId = proximoIdRotina()
 
         val tempoTotal = atividades.sumOf {
             it.duracaoMinutos
         }
 
         val novaRotina = Rotina(
-            idRotina = idRotina,
+            idRotina = novoId,
             nomeRotina = nomeRotina.value,
             tempoMinutosRotina = tempoTotal
         )
 
-        // Adiciona a rotina
         listaRotinasGlobal.add(novaRotina)
 
-        // Adiciona as atividades vinculadas à rotina
         atividades.forEach { atividade ->
 
-            val atividadeSalva = atividade.copy(
-                idRotina = idRotina
+            listaAtividadesGlobal.add(
+                atividade.copy(
+                    idRotina = novoId
+                )
             )
-
-            listaAtividadesGlobal.add(atividadeSalva)
         }
 
         return novaRotina
+    }
+
+    var idRotinaEditando: Int? = null
+        private set
+
+    fun carregarRotinaParaEditar(id: Int) {
+
+        val rotina = listaRotinasGlobal.find {
+            it.idRotina == id
+        } ?: return
+
+        idRotinaEditando = id
+
+        nomeRotina.value = rotina.nomeRotina
+
+        // Se você estiver salvando início e fim na Rotina,
+        // podemos carregar esses valores aqui também.
+
+        atividades.clear()
+
+        atividades.addAll(
+            listaAtividadesGlobal.filter {
+                it.idRotina == id
+            }
+        )
     }
 }

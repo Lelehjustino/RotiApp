@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
@@ -24,6 +27,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.NavigationBar
@@ -40,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -53,11 +59,13 @@ import com.example.myapplication.ui.theme.calcularXpNoNivel
 // ============================================================
 // NAVEGAÇÃO PRINCIPAL
 // ============================================================
-
 @Composable
 fun AppNavegacao() {
 
     val navController = rememberNavController()
+
+    // UM ÚNICO ViewModel para as telas de perfil
+    val perfilViewModel: PerfilViewModel = viewModel()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -77,48 +85,154 @@ fun AppNavegacao() {
                 .padding(innerPadding)
         ) {
 
-            // Tela inicial
+            // ==========================================
+            // LISTA DE ROTINAS
+            // ==========================================
+
             composable(RotaAbas.TelaListaRotina) {
-                TelaListaRotinas(navController)
+
+                TelaListaRotinas(
+                    navController = navController
+                )
             }
 
-            // Progresso
+
+            // ==========================================
+            // PROGRESSO
+            // ==========================================
+
             composable(RotaAbas.Progresso) {
-                Progresso(navController)
+
+                Progresso(
+                    navController = navController
+                )
             }
 
-            // Perfil
+
+            // ==========================================
+            // PERFIL
+            // ==========================================
+
             composable(RotaAbas.TelaPerfil) {
-                TelaPerfil(navController)
+
+                TelaPerfil(
+                    navController = navController,
+                    viewModel = perfilViewModel
+                )
             }
 
-            // Criar nova rotina
-            composable(RotaAbas.TelaCriacao) {
-                TelaCriacao(navController)
-            }
 
-            // Detalhes da rotina
-            composable(RotaAbas.TelaRotina) {
-                TelaRotina(navController)
-            }
+            // ==========================================
+            // EDITAR / CADASTRAR PERFIL
+            // ==========================================
 
-            // Histórico
-            composable(RotaAbas.TelaHistorico) {
-                TelaHistorico(navController)
-            }
-
-            // Metas
-            composable(RotaAbas.TelaMetas) {
-                TelaMetas(navController)
-            }
-
-            // Perfil cont
             composable(RotaAbas.TelaPerfilCont) {
-                TelaPerfilCont(navController)
+
+                TelaPerfilCont(
+                    navController = navController,
+                    viewModel = perfilViewModel
+                )
+            }
+
+
+            // ==========================================
+            // NOVA ROTINA
+            // ==========================================
+
+            composable(
+                route = RotaAbas.TelaCriacao
+            ) {
+
+                val viewModel: TelaCriacaoViewModel = viewModel()
+
+                TelaCriacao(
+                    navController = navController,
+                    viewModel = viewModel
+                )
+            }
+
+
+            // ==========================================
+            // EDITAR ROTINA
+            // ==========================================
+
+            composable(
+                route = "${RotaAbas.TelaCriacao}/editar/{idRotina}"
+            ) { backStackEntry ->
+
+                val id = backStackEntry
+                    .arguments
+                    ?.getString("idRotina")
+                    ?.toIntOrNull()
+
+                val viewModel: TelaCriacaoViewModel = viewModel()
+
+                if (id != null) {
+                    viewModel.carregarRotinaParaEditar(id)
+                }
+
+                TelaCriacao(
+                    navController = navController,
+                    viewModel = viewModel
+                )
+            }
+
+
+            // ==========================================
+            // DETALHES DA ROTINA
+            // ==========================================
+
+            composable(
+                route = "${RotaAbas.TelaRotina}/{idRotina}"
+            ) { backStackEntry ->
+
+                val idRotina = backStackEntry
+                    .arguments
+                    ?.getString("idRotina")
+                    ?.toIntOrNull()
+
+                TelaRotina(
+                    navController = navController,
+                    idRotina = idRotina
+                )
+            }
+
+
+            // ==========================================
+            // HISTÓRICO
+            // ==========================================
+
+            composable(RotaAbas.TelaHistorico) {
+
+                TelaHistorico(
+                    navController = navController
+                )
+            }
+
+
+            // ==========================================
+            // METAS
+            // ==========================================
+
+            composable(RotaAbas.TelaMetas) {
+
+                TelaMetas(
+                    navController = navController
+                )
+            }
+
+            // DESEMPENHO
+            composable(RotaAbas.TelaDesempenho) {
+
+                TelaDesempenho(
+                    navController = navController
+                )
             }
         }
     }
 }
+
+
 
 
 // TELA DE PROGRESSO
@@ -170,6 +284,73 @@ fun Progresso(navController: NavHostController) {
         )
 
         CardMetasHistorico(navController)
+
+        Spacer(
+            modifier = Modifier.height(16.dp)
+        )
+
+        CardDesempenho(navController)
+    }
+}
+
+@Composable
+fun CardDesempenho(
+    navController: NavHostController
+) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                navController.navigate(RotaAbas.TelaDesempenho)
+            },
+
+        shape = RoundedCornerShape(20.dp),
+
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF388E3C)
+        )
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+
+            verticalAlignment = Alignment.CenterVertically,
+
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = "Meu desempenho",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(
+                    modifier = Modifier.height(6.dp)
+                )
+
+                Text(
+                    text = "Veja como suas rotinas estão evoluindo.",
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 14.sp
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = "Abrir desempenho",
+                tint = Color.White,
+                modifier = Modifier.size(30.dp)
+            )
+        }
     }
 }
 
